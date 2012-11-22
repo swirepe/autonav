@@ -7,15 +7,23 @@ import tempfile
 
 from collections import defaultdict
 
+
+# PROBLEM: configparser isn't case-sensitive, and 
+# this function filters out things that aren't directories.
+# directories in linux are case sensitive, so
+# things that should show up get filtered out
 def getPaths():
     conf = sys.argv[1:]    
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
     parser.read(conf)
-    
+   
+    items = []
+ 
     if parser.has_section("include"):
-        items = []
         for item in parser.items("include"):
+            print item
             item = os.path.abspath(item[0])
+            print item
             items.extend(glob.glob(item))
             
         items = filter(os.path.isdir, items)
@@ -64,7 +72,6 @@ def lowercasePathsAndNames(pathPairs):
         if base.lower() != base:
             newPairs.append( (path, base.lower() ) )
                 
-    #print newPairs
     return newPairs
 
 
