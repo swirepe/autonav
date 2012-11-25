@@ -8,22 +8,17 @@ import tempfile
 from collections import defaultdict
 
 
-# PROBLEM: configparser isn't case-sensitive, and 
-# this function filters out things that aren't directories.
-# directories in linux are case sensitive, so
-# things that should show up get filtered out
 def getPaths():
     conf = sys.argv[1:]    
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+    parser.optionxform = str  # make it case sensitive
     parser.read(conf)
    
     items = []
  
     if parser.has_section("include"):
         for item in parser.items("include"):
-            print item
             item = os.path.abspath(item[0])
-            print item
             items.extend(glob.glob(item))
             
         items = filter(os.path.isdir, items)
@@ -46,11 +41,13 @@ def pathsAndNames(paths):
     """
     if two top-level names are the same, disambiguate them
     by putting in a hyphen
+    
+    replace spaces with underscores in the name
     """
     dupes = defaultdict(list)
     
     for path in paths:
-        dupes[ os.path.basename(path) ].append(path)
+        dupes[ os.path.basename(path).replace(" ", "_") ].append(path)
         
     pairs = []
     for base, path in dupes.iteritems():
@@ -65,12 +62,13 @@ def pathsAndNames(paths):
     
 
 def lowercasePathsAndNames(pathPairs):
-    """doubles the length of this by turning things into lowercase also"""
+    """doubles the length of this by turning things into lowercase also."""
     newPairs = pathPairs[:]
     
     for path, base in pathPairs:
         if base.lower() != base:
             newPairs.append( (path, base.lower() ) )
+        
                 
     return newPairs
 
@@ -79,13 +77,12 @@ def writeFn(path, name, f):
     strtemplate = """
     
 function %s {
-    cd %s
+    cd '%s'
 }
     
 """ % ( name, path)
     
     f.write(strtemplate)
-
 
 
 def writeMappings(pathPairs, f):
